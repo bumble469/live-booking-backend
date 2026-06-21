@@ -1,5 +1,8 @@
 export interface BookingRequestBody {
-  seatId: string;
+  seatIds: string[];
   screenId: string;
   sessionId: string;
+  fullname: string;
+  email: string;
+  phone: string;
 }
