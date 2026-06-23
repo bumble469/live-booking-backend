@@ -4,22 +4,18 @@ import { Server as SocketIOServer, type Socket } from 'socket.io';
 let io: SocketIOServer;
 
 export function initSocket(httpServer: HttpServer): SocketIOServer {
-    io = new SocketIOServer(httpServer, {
-        cors: {
-            origin: '*',
-        },
-    });
+  io = new SocketIOServer(httpServer, { cors: { origin: '*' } });
 
-    io.on('connection', (socket: Socket) => {
-        socket.on('join_screen', (screenId: string) => {
-            socket.join(`screen-${screenId}`);
-        });
-        socket.on('leave_screen', (screenId: string) => {
-            socket.leave(`screen-${screenId}`);
-        });
+  io.on('connection', (socket: Socket) => {
+    socket.on('join_screening', (screeningId: string) => {
+      socket.join(`screening-${screeningId}`);
     });
+    socket.on('leave_screening', (screeningId: string) => {
+      socket.leave(`screening-${screeningId}`);
+    });
+  });
 
-    return io;
+  return io;
 }
 
 export function getIO(): SocketIOServer {

@@ -1,11 +1,12 @@
 export interface LockRequestBody {
-  screenId: string;
   seatId: string;
+  screeningId: string;
   sessionId: string;
 }
 
 export interface UnlockRequestBody {
   seatId: string;
+  screeningId: string;
   sessionId: string;
 }
 

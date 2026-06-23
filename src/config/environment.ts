@@ -10,5 +10,7 @@ function required(name: string): string {
 export const env = {
   port: Number(process.env.PORT ?? 3000),
   databaseUrl: required('DATABASE_URL'),
+  resendApiKey: required('RESEND_API_KEY'),
   nodeEnv: process.env.NODE_ENV ?? 'development',
+  frontendUrl: required('FRONTEND_URL'),
 };
