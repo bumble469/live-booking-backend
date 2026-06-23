@@ -1,89 +1,89 @@
 import { pool } from '../../db/pool.js';
 
 export async function trySeatLock(
-    seatId: number,
-    sessionId: string,
-    lockDurationMinutes: number = 5
-): Promise<{success: boolean; lockedBy: string | null; status: string}>
-{
-    const client = await pool.connect();
-    try {
-        await client.query('BEGIN');
+  seatId: number,
+  screeningId: number,
+  sessionId: string,
+  lockDurationMinutes = 5
+): Promise<{ success: boolean; lockedBy: string | null; status: string }> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
 
-        // GET THE SEAT
-        const { rows } = await client.query(
-            `SELECT id, status, locked_by
-            FROM seats
-            WHERE id = $1
-            FOR UPDATE NOWAIT`,
-            [seatId]
-        );
+    // Upsert the screening_seats row, then lock it
+    await client.query(
+      `INSERT INTO screening_seats (screening_id, seat_id, status)
+       VALUES ($1, $2, 'AVAILABLE')
+       ON CONFLICT (screening_id, seat_id) DO NOTHING`,
+      [screeningId, seatId]
+    );
 
-        const seat = rows[0];
+    const { rows } = await client.query(
+      `SELECT id, status, locked_by
+       FROM screening_seats
+       WHERE screening_id = $1 AND seat_id = $2
+       FOR UPDATE NOWAIT`,
+      [screeningId, seatId]
+    );
 
-        // IF SEAT NOT FOUND
-        if (!seat) {
-            await client.query('ROLLBACK');
-            return { success: false, lockedBy: null, status: 'NOT_FOUND' };
-        }
+    const row = rows[0];
 
-        // IF SEAT ALREADY LOCKED
-        if (seat.status !== 'AVAILABLE') {
-            await client.query('ROLLBACK');
-            return { success: false, lockedBy: seat.locked_by, status: seat.status };
-        }
-
-        // IF SEAT IS AVAILABLE, LOCK IT
-        await client.query(
-            `UPDATE seats
-            SET status = 'LOCKED',
-                locked_by = $1,
-                lock_expires_at = now() + ($2 || ' minutes')::interval
-            WHERE id = $3`,
-            [sessionId, lockDurationMinutes, seatId]
-        );
-
-        await client.query('COMMIT');
-        return { success: true, lockedBy: sessionId, status: 'LOCKED' };
-    } catch(err: unknown){
-        await client.query('ROLLBACK');
-        if (
-            typeof err === 'object' &&
-            err !== null &&
-            'code' in err &&
-            (err as { code: string }).code === '55P03'
-        ) {
-            return { success: false, lockedBy: null, status: 'LOCKED' };
-        }
-        throw err;
-    } finally {
-        client.release();
+    if (!row) {
+      await client.query('ROLLBACK');
+      return { success: false, lockedBy: null, status: 'NOT_FOUND' };
     }
+
+    if (row.status !== 'AVAILABLE') {
+      await client.query('ROLLBACK');
+      return { success: false, lockedBy: row.locked_by, status: row.status };
+    }
+
+    await client.query(
+      `UPDATE screening_seats
+       SET status = 'LOCKED',
+           locked_by = $1,
+           lock_expires_at = now() + ($2 || ' minutes')::interval
+       WHERE screening_id = $3 AND seat_id = $4`,
+      [sessionId, lockDurationMinutes, screeningId, seatId]
+    );
+
+    await client.query('COMMIT');
+    return { success: true, lockedBy: sessionId, status: 'LOCKED' };
+  } catch (err: unknown) {
+    await client.query('ROLLBACK');
+    if (
+      typeof err === 'object' && err !== null && 'code' in err &&
+      (err as { code: string }).code === '55P03'
+    ) {
+      return { success: false, lockedBy: null, status: 'LOCKED' };
+    }
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
-
 export async function releaseSeatLock(
-    seatId: number,
-    sessionId: string
+  seatId: number,
+  screeningId: number,
+  sessionId: string
 ): Promise<boolean> {
-    const result = await pool.query(
-    `UPDATE seats
-     SET status = 'AVAILABLE',
-         locked_by = NULL,
-         lock_expires_at = NULL
-     WHERE id = $1
-       AND locked_by = $2
-       AND status = 'LOCKED'`,
-    [seatId, sessionId]
+  const result = await pool.query(
+    `UPDATE screening_seats
+     SET status = 'AVAILABLE', locked_by = NULL, lock_expires_at = NULL
+     WHERE seat_id = $1 AND screening_id = $2 AND locked_by = $3 AND status = 'LOCKED'`,
+    [seatId, screeningId, sessionId]
   );
   return (result.rowCount ?? 0) > 0;
 }
 
-export async function getLockedSeatDetails(seatId: number) {
+export async function getLockedSeatDetails(seatId: number, screeningId: number) {
   const { rows } = await pool.query(
-    `SELECT id, screen_id, status, locked_by, lock_expires_at
-     FROM seats WHERE id = $1`,
-    [seatId]
+    `SELECT ss.status, ss.locked_by, ss.lock_expires_at, s.screen_id
+     FROM screening_seats ss
+     JOIN seats s ON s.id = ss.seat_id
+     WHERE ss.seat_id = $1 AND ss.screening_id = $2`,
+    [seatId, screeningId]
   );
   return rows[0] ?? null;
 }
