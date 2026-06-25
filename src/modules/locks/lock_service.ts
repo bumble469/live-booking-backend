@@ -1,5 +1,5 @@
 import { trySeatLock, releaseSeatLock, getLockedSeatDetails } from './lock_repository.js';
-import { getIO } from '../../websockets/socket.js';
+import { getIO, emitAvailabilityUpdate  } from '../../websockets/socket.js';
 
 export async function lockSeat(seatId: string, screeningId: string, sessionId: string) {
   const result = await trySeatLock(Number(seatId), Number(screeningId), sessionId);
@@ -16,6 +16,8 @@ export async function lockSeat(seatId: string, screeningId: string, sessionId: s
     lockExpiresAt: detail?.lock_expires_at,
   });
 
+  void emitAvailabilityUpdate(Number(screeningId));
+
   return { success: true, lockExpiresAt: detail?.lock_expires_at };
 }
 
@@ -26,5 +28,6 @@ export async function unlockSeat(seatId: string, screeningId: string, sessionId:
   }
 
   getIO().to(`screening-${screeningId}`).emit('seat_unlocked', { seatId, screeningId });
+  void emitAvailabilityUpdate(Number(screeningId));
   return { success: true };
 }

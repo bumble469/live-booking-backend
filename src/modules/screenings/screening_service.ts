@@ -8,6 +8,7 @@ function mapScreening(r: {
   id: number; show_id: number; show_title: string; duration_minutes: number;
   screen_id: number; screen_name: string; theater_id: number;
   theater_name: string; theater_city: string; starts_at: Date;
+  total_seats: number; available_seats: number;
 }) {
   const startsAt = new Date(r.starts_at);
   const endsAt = new Date(startsAt.getTime() + r.duration_minutes * 60000);
@@ -22,6 +23,8 @@ function mapScreening(r: {
     theatreCity: r.theater_city,
     startsAt: startsAt.toISOString(),
     endsAt: endsAt.toISOString(),
+    totalSeats: r.total_seats,           
+    availableSeats: r.available_seats,   
   };
 }
 
@@ -38,12 +41,14 @@ export async function getScreeningsByTheatre(theatreId: string) {
 export async function getSeatsForScreening(screeningId: string) {
   const rows = await findSeatsByScreeningId(Number(screeningId));
   return rows.map((r: {
-    id: number; screen_id: number; row_label: string; seat_number: number; status: string;
+    id: number; screen_id: number; row_label: string;
+    seat_number: number; status: string; locked_by: string | null; 
   }) => ({
     id: String(r.id),
     screenId: String(r.screen_id),
     row: r.row_label,
     number: r.seat_number,
     status: r.status as 'AVAILABLE' | 'LOCKED' | 'BOOKED',
+    lockedBy: r.locked_by ?? null,  
   }));
 }
