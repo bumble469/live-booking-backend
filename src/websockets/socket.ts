@@ -1,5 +1,6 @@
 import { Server as HttpServer } from 'http';
 import { Server as SocketIOServer, type Socket } from 'socket.io';
+import { countAvailableSeats } from '../modules/screenings/screening_repository.js';
 
 let io: SocketIOServer;
 
@@ -21,4 +22,13 @@ export function initSocket(httpServer: HttpServer): SocketIOServer {
 export function getIO(): SocketIOServer {
   if (!io) throw new Error('Socket.IO not initialized');
   return io;
+}
+
+export async function emitAvailabilityUpdate(screeningId: number): Promise<void> {
+  const { availableSeats, totalSeats } = await countAvailableSeats(screeningId);
+  getIO().to(`screening-${screeningId}`).emit('availability_update', {
+    screeningId: String(screeningId),
+    availableSeats,
+    totalSeats,
+  });
 }

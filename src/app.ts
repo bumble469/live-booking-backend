@@ -7,6 +7,8 @@ import { lockRoutes } from './modules/locks/lock_route.js';
 import { bookingRoutes } from './modules/bookings/booking_route.js';
 import { showRoutes } from './modules/shows/show_route.js';
 import { screeningRoutes } from './modules/screenings/screening_route.js';
+import { homeRoutes } from "./modules/home/home_route.js";
+import { verificationRoutes } from "./modules/verification/verification_route.js";
 
 export function buildApp(): FastifyInstance {
   const app = Fastify({ logger: true });
@@ -19,5 +21,8 @@ export function buildApp(): FastifyInstance {
   app.register(bookingRoutes);
   app.register(showRoutes);
   app.register(screeningRoutes);
+  app.register(homeRoutes);
+  app.register(verificationRoutes);
+  
   return app;
 }

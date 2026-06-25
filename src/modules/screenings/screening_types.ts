@@ -9,4 +9,6 @@ export interface ScreeningRow {
   theater_name: string;
   theater_city: string;
   starts_at: Date;
+  total_seats: number;
+  available_seats: number;
 }

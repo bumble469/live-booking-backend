@@ -1,5 +1,5 @@
 import { confirmBooking } from './booking_repository.js';
-import { getIO } from '../../websockets/socket.js';
+import { getIO, emitAvailabilityUpdate } from '../../websockets/socket.js';
 import { sendBookingConfirmation } from './booking_email.js';
 
 interface BookSeatsResult {
@@ -31,6 +31,8 @@ export async function bookSeats(
   }
 
   getIO().to(`screening-${screeningId}`).emit('seat_booked', { seatIds, screeningId });
+
+  void emitAvailabilityUpdate(Number(screeningId));
 
   void sendBookingConfirmation({
     to: email,

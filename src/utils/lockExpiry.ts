@@ -1,5 +1,5 @@
 import { pool } from '../db/pool.js';
-import { getIO } from '../websockets/socket.js';
+import { getIO, emitAvailabilityUpdate } from '../websockets/socket.js';
 
 export async function releaseExpiredLocks(): Promise<void> {
   const result = await pool.query<{ seat_id: number; screening_id: number }>(
@@ -11,11 +11,17 @@ export async function releaseExpiredLocks(): Promise<void> {
 
   if (result.rowCount === 0) return;
 
+  const affectedScreeningIds = [...new Set(result.rows.map((r) => r.screening_id))];
+
   for (const row of result.rows) {
     getIO().to(`screening-${row.screening_id}`).emit('seat_unlocked', {
       seatId: String(row.seat_id),
       screeningId: String(row.screening_id),
     });
+  }
+
+  for (const screeningId of affectedScreeningIds) {
+    void emitAvailabilityUpdate(screeningId);
   }
 
   console.log(`Released ${result.rowCount} expired lock(s)`);
