@@ -50,6 +50,7 @@ export async function findScreeningsByShow(
     `${SCREENING_SELECT}
      WHERE sc.show_id = $1
        AND ${ACTIVE_SCREENING_FILTER}
+       AND sc.starts_at <= now() + interval '7 days'
        ${theatreFilter}
      ORDER BY sc.starts_at`,
     params
