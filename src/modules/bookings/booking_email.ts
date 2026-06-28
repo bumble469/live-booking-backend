@@ -127,7 +127,7 @@ export async function sendBookingConfirmation(
   const { to, bookingReference, showTitle } = args;
 
   const { error } = await resend.emails.send({
-    from: 'onboarding@resend.dev',
+    from: 'Showaholic <onboarding@resend.dev>',
     to,
     subject: `Booking confirmed — ${showTitle} · ${bookingReference}`,
     html: buildTicketHtml(args),
@@ -230,7 +230,7 @@ export async function sendCancellationConfirmation(
   const { to, bookingReference, showTitle } = args;
 
   const { error } = await resend.emails.send({
-    from: 'onboarding@resend.dev',
+    from: 'Showaholic <onboarding@resend.dev>',
     to,
     subject: `Booking cancelled — ${showTitle} · ${bookingReference}`,
     html: buildCancellationHtml(args),

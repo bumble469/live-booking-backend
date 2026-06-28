@@ -9,3 +9,9 @@ export interface TheaterDto {
     name: string;
     city: string;
 }
+
+export interface TheaterListQuery {
+  page?: string;
+  limit?: string;
+  q?: string;
+}
