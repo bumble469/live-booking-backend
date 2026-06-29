@@ -1,4 +1,4 @@
-import { transporter } from '../../utils/mailer.js';
+import { sendEmail } from '../../utils/mailer.js';
 import { env } from '../../config/environment.js';
 import type { SendBookingConfirmationArgs, SendCancellationConfirmationArgs } from './booking_types.js';
 
@@ -108,16 +108,11 @@ function buildTicketHtml(args: SendBookingConfirmationArgs): string {
 
 export async function sendBookingConfirmation(args: SendBookingConfirmationArgs): Promise<void> {
   const { to, bookingReference, showTitle } = args;
-  try {
-    await transporter.sendMail({
-      from: `Showaholic <${env.gmailUser}>`,
-      to,
-      subject: `Booking confirmed — ${showTitle} · ${bookingReference}`,
-      html: buildTicketHtml(args),
-    });
-  } catch (error) {
-    console.error('[booking_email] Failed to send confirmation email:', error);
-  }
+  await sendEmail(
+    to,
+    `Booking confirmed — ${showTitle} · ${bookingReference}`,
+    buildTicketHtml(args)
+  );
 }
 
 function buildCancellationHtml(args: SendCancellationConfirmationArgs): string {
@@ -198,14 +193,9 @@ function buildCancellationHtml(args: SendCancellationConfirmationArgs): string {
 
 export async function sendCancellationConfirmation(args: SendCancellationConfirmationArgs): Promise<void> {
   const { to, bookingReference, showTitle } = args;
-  try {
-    await transporter.sendMail({
-      from: `Showaholic <${env.gmailUser}>`,
-      to,
-      subject: `Booking cancelled — ${showTitle} · ${bookingReference}`,
-      html: buildCancellationHtml(args),
-    });
-  } catch (error) {
-    console.error('[booking_email] Failed to send cancellation email:', error);
-  }
+  await sendEmail(
+    to,
+    `Booking cancelled — ${showTitle} · ${bookingReference}`,
+    buildCancellationHtml(args)
+  );
 }
