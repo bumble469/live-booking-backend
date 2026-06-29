@@ -1,4 +1,4 @@
-import { resend } from '../../utils/mailer.js';
+import { transporter } from '../../utils/mailer.js';
 import { env } from '../../config/environment.js';
 import type { SendBookingConfirmationArgs, SendCancellationConfirmationArgs } from './booking_types.js';
 
@@ -33,23 +33,17 @@ function buildTicketHtml(args: SendBookingConfirmationArgs): string {
     <tr>
       <td align="center">
         <table width="520" cellpadding="0" cellspacing="0" style="background:#2A1820;border-radius:12px;overflow:hidden;border:1px solid #4d2f3a;">
-
-          <!-- Header -->
           <tr>
             <td style="padding:32px 36px 24px;border-bottom:1px solid #4d2f3a;">
               <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.35em;color:#a6939a;text-transform:uppercase;">Booking Confirmed</p>
               <h1 style="margin:0;font-size:28px;color:#f3eae0;letter-spacing:0.05em;">You're All Set</h1>
             </td>
           </tr>
-
-          <!-- Body -->
           <tr>
             <td style="padding:28px 36px;">
               <p style="margin:0 0 24px;font-size:15px;color:#a6939a;">
                 Hi <span style="color:#f3eae0;font-weight:600;">${fullname}</span>, your booking is confirmed.
               </p>
-
-              <!-- Show details -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
                 <tr>
                   <td style="padding:16px;background:#1C1014;border-radius:8px;border:1px solid #4d2f3a;">
@@ -61,8 +55,6 @@ function buildTicketHtml(args: SendBookingConfirmationArgs): string {
                   </td>
                 </tr>
               </table>
-
-              <!-- Seats -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
                 <tr>
                   <td style="padding:16px;background:#1C1014;border-radius:8px;border:1px solid #4d2f3a;">
@@ -73,8 +65,6 @@ function buildTicketHtml(args: SendBookingConfirmationArgs): string {
                   </td>
                 </tr>
               </table>
-
-              <!-- Reference -->
               <table width="100%" cellpadding="0" cellspacing="0" style="border-top:2px dashed #4d2f3a;margin-bottom:24px;">
                 <tr>
                   <td style="padding-top:24px;">
@@ -88,8 +78,6 @@ function buildTicketHtml(args: SendBookingConfirmationArgs): string {
                   </td>
                 </tr>
               </table>
-
-              <!-- Cancel link -->
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center">
@@ -102,8 +90,6 @@ function buildTicketHtml(args: SendBookingConfirmationArgs): string {
               </table>
             </td>
           </tr>
-
-          <!-- Footer -->
           <tr>
             <td style="padding:20px 36px;border-top:1px solid #4d2f3a;">
               <p style="margin:0;font-size:11px;color:#4d2f3a;text-align:center;letter-spacing:0.05em;">
@@ -111,7 +97,6 @@ function buildTicketHtml(args: SendBookingConfirmationArgs): string {
               </p>
             </td>
           </tr>
-
         </table>
       </td>
     </tr>
@@ -121,19 +106,16 @@ function buildTicketHtml(args: SendBookingConfirmationArgs): string {
   `.trim();
 }
 
-export async function sendBookingConfirmation(
-  args: SendBookingConfirmationArgs
-): Promise<void> {
+export async function sendBookingConfirmation(args: SendBookingConfirmationArgs): Promise<void> {
   const { to, bookingReference, showTitle } = args;
-
-  const { error } = await resend.emails.send({
-    from: 'Showaholic <onboarding@resend.dev>',
-    to,
-    subject: `Booking confirmed — ${showTitle} · ${bookingReference}`,
-    html: buildTicketHtml(args),
-  });
-
-  if (error) {
+  try {
+    await transporter.sendMail({
+      from: `Showaholic <${env.gmailUser}>`,
+      to,
+      subject: `Booking confirmed — ${showTitle} · ${bookingReference}`,
+      html: buildTicketHtml(args),
+    });
+  } catch (error) {
     console.error('[booking_email] Failed to send confirmation email:', error);
   }
 }
@@ -154,21 +136,17 @@ function buildCancellationHtml(args: SendCancellationConfirmationArgs): string {
     <tr>
       <td align="center">
         <table width="520" cellpadding="0" cellspacing="0" style="background:#2A1820;border-radius:12px;overflow:hidden;border:1px solid #4d2f3a;">
-
           <tr>
             <td style="padding:32px 36px 24px;border-bottom:1px solid #4d2f3a;">
               <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.35em;color:#a6939a;text-transform:uppercase;">Booking Cancelled</p>
               <h1 style="margin:0;font-size:28px;color:#f3eae0;letter-spacing:0.05em;">Sorry to See You Go</h1>
             </td>
           </tr>
-
           <tr>
             <td style="padding:28px 36px;">
               <p style="margin:0 0 24px;font-size:15px;color:#a6939a;">
                 Hi <span style="color:#f3eae0;font-weight:600;">${fullname}</span>, your booking has been successfully cancelled.
               </p>
-
-              <!-- Show details -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
                 <tr>
                   <td style="padding:16px;background:#1C1014;border-radius:8px;border:1px solid #4d2f3a;">
@@ -180,8 +158,6 @@ function buildCancellationHtml(args: SendCancellationConfirmationArgs): string {
                   </td>
                 </tr>
               </table>
-
-              <!-- Seats -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
                 <tr>
                   <td style="padding:16px;background:#1C1014;border-radius:8px;border:1px solid #4d2f3a;">
@@ -192,8 +168,6 @@ function buildCancellationHtml(args: SendCancellationConfirmationArgs): string {
                   </td>
                 </tr>
               </table>
-
-              <!-- Reference -->
               <table width="100%" cellpadding="0" cellspacing="0" style="border-top:2px dashed #4d2f3a;">
                 <tr>
                   <td style="padding-top:24px;">
@@ -206,7 +180,6 @@ function buildCancellationHtml(args: SendCancellationConfirmationArgs): string {
               </table>
             </td>
           </tr>
-
           <tr>
             <td style="padding:20px 36px;border-top:1px solid #4d2f3a;">
               <p style="margin:0;font-size:11px;color:#4d2f3a;text-align:center;letter-spacing:0.05em;">
@@ -214,7 +187,6 @@ function buildCancellationHtml(args: SendCancellationConfirmationArgs): string {
               </p>
             </td>
           </tr>
-
         </table>
       </td>
     </tr>
@@ -224,19 +196,16 @@ function buildCancellationHtml(args: SendCancellationConfirmationArgs): string {
   `.trim();
 }
 
-export async function sendCancellationConfirmation(
-  args: SendCancellationConfirmationArgs
-): Promise<void> {
+export async function sendCancellationConfirmation(args: SendCancellationConfirmationArgs): Promise<void> {
   const { to, bookingReference, showTitle } = args;
-
-  const { error } = await resend.emails.send({
-    from: 'Showaholic <onboarding@resend.dev>',
-    to,
-    subject: `Booking cancelled — ${showTitle} · ${bookingReference}`,
-    html: buildCancellationHtml(args),
-  });
-
-  if (error) {
+  try {
+    await transporter.sendMail({
+      from: `Showaholic <${env.gmailUser}>`,
+      to,
+      subject: `Booking cancelled — ${showTitle} · ${bookingReference}`,
+      html: buildCancellationHtml(args),
+    });
+  } catch (error) {
     console.error('[booking_email] Failed to send cancellation email:', error);
   }
 }
