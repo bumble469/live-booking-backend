@@ -1,4 +1,5 @@
 import 'dotenv/config';
+
 function required(name: string): string {
   const value = process.env[name];
   if (!value) {
@@ -10,7 +11,8 @@ function required(name: string): string {
 export const env = {
   port: Number(process.env.PORT ?? 3000),
   databaseUrl: required('DATABASE_URL'),
-  resendApiKey: required('RESEND_API_KEY'),
+  gmailUser: required('GMAIL_USER'),
+  gmailAppPassword: required('GMAIL_APP_PASSWORD'),
   nodeEnv: process.env.NODE_ENV ?? 'development',
   frontendUrl: required('FRONTEND_URL'),
 };
